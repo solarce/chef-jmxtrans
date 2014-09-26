@@ -1,4 +1,4 @@
-nane             "jmxtrans"
+name             "jmxtrans"
 maintainer       "Bryan Willson Berry"
 maintainer_email "bryan.berry@gmail.com"
 license          "Apache 2.0"
