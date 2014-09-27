@@ -1,0 +1,20 @@
+description "jmxtrans"
+
+start on runlevel [2345]
+stop on runlevel [!2345]
+
+respawn
+
+limit nofile 8192 8192
+
+console log
+
+script
+    if [ -f /etc/default/<%= @name %> ]; then
+      source /etc/default/<%= @name %>
+    fi
+
+    exec start-stop-daemon --start -b --pidfile $PIDFILE --oknodo \
+        --chuid jmxtrans:jmxtrans -u jmxtrans -g jmxtrans -v \
+        --exec /opt/jmxtrans/jmxtrans.sh start"
+end script

@@ -9,24 +9,18 @@
 
 include_recipe "ark"
 
-if platform_family?("debian")
-  init_script_file = "jmxtrans.init.deb.erb"
-elsif platform_family?("rhel")
-  init_script_file = "jmxtrans.init.el.erb"
-end
-
 user node['jmxtrans']['user']
 
 # merge stock jvm queries w/ container specific ones into single array
 servers = node['jmxtrans']['servers']
+servers_to_query = {}
 servers.each do |server|
-  server['queries'] = node['jmxtrans']['default_queries']['jvm']
-  case server['type']
-  when 'tomcat'
-    server['queries'] << node['jmxtrans']['default_queries']['tomcat']
-  end
-  server['queries'].flatten!
+  server_name = server['name']
+  servers_to_query["#{server_name}"] = Hash[server]
+  queries = node['jmxtrans']['default_queries']['jvm'].to_a
+  servers_to_query["#{server_name}"]['queries'] = queries
 end
+p servers_to_query
 
 ark "jmxtrans" do
   url node['jmxtrans']['url']
@@ -38,20 +32,20 @@ ark "jmxtrans" do
   group node['jmxtrans']['user']
 end
 
-template "/etc/init.d/jmxtrans" do
-  source init_script_file
-  owner "root"
-  group "root"
-  mode  "0755"
-  variables( :name => 'jmxtrans' )
-  notifies :restart, "service[jmxtrans]"
-end
-
 template "/etc/default/jmxtrans" do
   source "jmxtrans_default.erb"
   owner "root"
   group "root"
   mode  "0644"
+  notifies :restart, "service[jmxtrans]"
+end
+
+template "/etc/init/jmxtrans.conf" do
+  source "jmxtrans.upstart.conf.erb"
+  owner "root"
+  group "root"
+  mode  "0755"
+  variables( :name => 'jmxtrans' )
   notifies :restart, "service[jmxtrans]"
 end
 
@@ -74,7 +68,7 @@ template "#{node['jmxtrans']['home']}/json/set1.json" do
   mode  "0755"
   notifies :restart, "service[jmxtrans]"
   variables(
-            :servers => servers,
+            :servers => servers_to_query,
             :graphite_host => node['jmxtrans']['graphite']['host'],
             :graphite_port => node['jmxtrans']['graphite']['port'],
             :root_prefix => node['jmxtrans']['root_prefix']
