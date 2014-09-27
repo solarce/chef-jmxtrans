@@ -10,7 +10,7 @@ GRAPH
     7-zip (>= 0.0.0)
     windows (>= 0.0.0)
   chef_handler (1.1.6)
-  jmxtrans (0.0.4)
+  jmxtrans (0.0.6)
     ark (>= 0.0.0)
   windows (1.34.6)
     chef_handler (>= 0.0.0)

@@ -20,7 +20,6 @@ servers.each do |server|
   queries = node['jmxtrans']['default_queries']['jvm'].to_a
   servers_to_query["#{server_name}"]['queries'] = queries
 end
-p servers_to_query
 
 ark "jmxtrans" do
   url node['jmxtrans']['url']
@@ -61,8 +60,8 @@ directory "#{node['jmxtrans']['home']}/json" do
   mode  "0755"
 end
 
-template "#{node['jmxtrans']['home']}/json/set1.json" do
-  source "set1.json.erb"
+template "#{node['jmxtrans']['home']}/json/jmxtrans_config.json" do
+  source "jmxtrans_config.json.erb"
   owner node['jmxtrans']['user']
   group node['jmxtrans']['user']
   mode  "0755"
@@ -84,13 +83,15 @@ cron "compress and remove logs rotated by log4j" do
   find #{node['jmxtrans']['log_dir']} ! -name '*.gz' -mtime +2 -exec gzip '{}' \\;"
 end
 
-execute "set correct jps alternative" do
-  command "update-alternatives jps --auto jps"
-  creates "/usr/bin/jps"
+if platform?("ubuntu")
+  service "jmxtrans" do
+    provider Chef::Provider::Service::Upstart
+    supports :restart => true, :status => true, :reload => true
+    action [ :enable, :start]
+  end
+else
+  service "jmxtrans" do
+    supports :restart => true, :status => true, :reload => true
+    action [ :enable, :start]
+  end
 end
-
-service "jmxtrans" do
-  supports :restart => true, :status => true, :reload => true
-  action [ :enable, :start]
-end
-
