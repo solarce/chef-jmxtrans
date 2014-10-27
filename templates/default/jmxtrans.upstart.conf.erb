@@ -14,5 +14,5 @@ script
 
     RUNCMD="cd /opt/<%= @name %>; ./jmxtrans.sh"
     start-stop-daemon --start --pidfile $PIDFILE -v \
-      --exec /bin/bash -- -c "$RUNCMD start json/jmxtrans_config.json"
+      --exec /bin/bash -- -c "$RUNCMD start configs/json"
 end script

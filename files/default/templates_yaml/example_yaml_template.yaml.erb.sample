@@ -1,0 +1,101 @@
+# example_template.yaml
+#
+# copy this template to your wrapper cookbook and edit as appropriate
+
+graphite_host: <%= node[:jmxtrans][:graphite][:host] %>
+graphite_port: <%= node[:jmxtrans][:graphite][:port] %>
+
+# Define sthe port that the hosts in this config listen for JMX on
+# ** THIS PORT HAS TO BE THE SAME FOR ALL HOSTS **
+query_port: 7199
+
+# global_host_alias: Will accept a blank space if alias and host is provided in host sets
+# ** LEAVE BLANK **
+global_host_alias: 
+
+# Query definitions, every query needs
+#  - name - unique name
+#  - obj - shoudl be the mbean name
+#  - resultAlias - can be the same as name
+#  - attr - just use [], it's the wildcard
+#
+#   from jmxtrans format, "name" must be given for referencing
+#   the query in host sets
+queries:
+    - name: mempool
+      obj: "java.lang:type=MemoryPool,name=*"
+      resultAlias: "memorypool"
+      attr:
+        - "Usage"
+    - name: gc
+      obj: "java.lang:type=GarbageCollector,name=*"
+      resultAlias: "gc"
+      attr:
+        - "CollectionCount"
+        - "CollectionTime"
+    - name: hibernate
+      obj: "Hibernate:type=statistics,name=*"
+      resultAlias: "hibernate"
+      attr:
+        - "QueryExecutionMaxTime"
+        - "Queries"
+        - "TransactionCount"
+    - name: sys
+      obj: "java.lang:type=OperatingSystem"
+      resultAlias: "sys"
+      attr:
+        - "SystemLoadAverage"
+        - "AvailableProcessors"
+        - "TotalPhysicalMemorySize"
+        - "FreePhysicalMemorySize"
+        - "TotalSwapSpaceSize"
+        - "FreeSwapSpaceSize"
+        - "OpenFileDescriptorCount"
+        - "MaxFileDescriptorCount"
+    - name: threads
+      obj : "java.lang:type=Threading"
+      resultAlias: "threads"
+      attr:
+        - "DaemonThreadCount"
+        - "PeakThreadCount"
+        - "ThreadCount"
+        - "TotalStartedThreadCount"
+    - name: org_apache_cassandra_metrics
+      obj: "org.apache.cassandra.metrics:type=*,*"
+      resultAlias: "org_apache_cassanda_metrics"
+      attr: []
+
+    - name: org_apache_cassandra_net
+      obj: "org.apache.cassandra.net:type=*,*"
+      resultAlias: "org_apache_cassanda_net"
+      attr: []
+
+    - name: org_apache_cassandra_db
+      obj: "org.apache.cassandra.db:type=*,*"
+      resultAlias: "org_apache_cassanda_db"
+      attr: []
+
+# Define named sets of hosts that get the queries above
+# query_names and hosts is a list
+sets:
+  # The setname determines the name of the output file
+  #  e.g. cassandra_db_prod1.json
+  - setname: cassandra_db_prod1
+    query_names:
+            - mempool
+            - gc
+            - hibernate
+            - sys
+            - threads
+            - org_apache_cassandra_metrics
+            - org_apache_cassandra_net
+            - org_apache_cassandra_db
+
+    hosts:
+          # the current (v246) yaml2jmxtrans.py uses the following format
+          # - hostname;alias/rootPrefix
+          # We recommend just making the alias the same as the hostname, but
+          #  you *must* use underscores instead of dots
+          #  e.g. host1.example.com;host1_example_com/jmx
+            - cassandra1.prod.example.com;cassandra1_prod_example_com/jmx
+            - cassandra2.prod.example.com;cassandra2_prod_example_com/jmx
